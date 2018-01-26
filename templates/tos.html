@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block head %}
+    <style>
+        .center {
+            padding: 40px 15px;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">app</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/marketplace">Marketplace</a></li>
+                {% if not current_user.is_authenticated %}
+                <li><p style="padding:8px 0 0 10px;"><a href="/signup"
+                                                            class="btn btn-primary" style="color:#fff;">Sign Up For
+                                Free</a></p></li>
+                <li><a href="/login">Login</a></li>
+                {% else %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="/settings">Account settings</a></li>
+                      <li role="separator" class="divider"></li>
+                      <li><a href="/logout">Log out</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="content">
+        <div class="page-header">
+            <h3>Terms of Service</h3>
+            <p>Our terms and conditions are pretty straight forward. If you have any questions, contact us <a href="/contact">here</a>.</p>
+        </div>
+        <div class="page-body">
+            <h5>Advertiser Terms</h5>
+            <ol>
+                <li>Shoutcart influencers reserve the right to refuse any shoutout request if promotional image does not adhere to their content guidelines (balance refund will be provided).</li>
+                <li>Shoutcart influencers may require additional information before posting a shoutout, please allow up to 72 hours after time of purchase for Shoutcart influencer to contact you or update on the status.</li>
+                <li>Orders under $50 require payment by balance which is refillable on your Balance page.</li>
+                <li>You are eligible for cancellation and reversal of advertiser balance 72hr after your preferred shoutout time. Simply login and cancel the shoutout on order view.</li>
+                <li>Permanent orders with bio links, are eligible to have bio link published for 24 hours, after which the influencer is allowed to remove the link.</li>
+                <li>While permanent shoutouts do stay on influencer profiles for the lifetime of their account, Shoutcart can not guarantee that shoutouts stay published on influencers profiles longer than 30 days.</li>
+            </ol>
+            <h5>Influencer Terms</h5>
+            <ol>
+                <li>You must own, have admin privileges, or have proper publicist relations on behalf of the account/influencer you are selling shoutouts for.</li>
+                <li>You are not allowed to solicit customers and advertisers outside of Shoutcart regarding payments for your Shoutcart orders. Payments and all financials are handled by Shoutcart.</li>
+                <li>You must notify Shoutcart if you are unable to post a shoutout or if shoutout conflicts with your ad policies within 48 hours of receiving the order.</li>
+                <li>You must NOT modify, change or otherwise edit the caption and media attachment of the shoutout order. Its better to cancel the order and notify Shoutcart.</li>
+                <li>You must NOT share opinions about Shoutcart orders in public form (comments, direct messages, order captions). Influencers will forfeit earnings if this rule is broken.</li>
+                <li>Our software will verify if you publish shoutout orders, but you must take screenshots of every shoutout, and upload them to our system in case of stopped order as well as for your own safety against disputes later.</li>
+                <li>Influencers that fail to post more than 2 consecutive orders may be subject to removal from Shoutcart and their selling privilege permanently suspended.</li>
+                <li>Influencers that fail to upload screenshots (or provide a link) for stopped orders, may have their withdrawal not processed until proof is provided and verified by Shoutcart team member.</li>
+                <li>Permanent shoutouts are required to stay on your social media account for the lifetime of your account. If permanent shoutouts are removed from your social media account, you will be subject to removal from Shoutcart and fees for all your shoutouts reversed from your balance.</li>
+                <li>If you remove your social media account from Shoutcart, you don’t get paid on pending withdrawal requests.</li>
+                <li>If you are caught breaking any of the rules above, your account will be terminated, selling privilege permanently suspended and balance returned to advertisers.</li>
+            </ol>
+            <h5>Cancellations and Refunds</h5>
+            <ol>
+                <li>Its possible that your shoutout might not get posted by our influencers for various reasons. 72hrs after your prefered shoutout time, you will be able to cancel the shoutout and claim credit to your balance.</li>
+                <li>Once your shoutout order changes from pending to running status, your payment is not refundable.</li>
+                <li>No refunds will be made on orders that have been shouted out incorrectly due to advertiser error (such as forgetting to include your username or spelling usernames incorrectly).</li>
+                <li>Due to the nature of our service, generally, refunds will not be offered. Exceptions to this rule would be fraudulent deposits and misuse of the network.</li>
+                <li>Only full deposit amounts are eligible for refund. If you manage to spend your balance partially, you are not eligible for a refund, and will have to spend the entire remaining balance on shoutouts. We may charge a $5 refund processing fee on case by case basis.</li>
+                <li>Advertiser balances are not refundable after 180 days of sitting idle in Shoutcart account.</li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock %}

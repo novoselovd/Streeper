@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block head %}
+    <style>
+        .center {
+            padding: 40px 15px;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">app</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/marketplace">Marketplace</a></li>
+                {% if not current_user.is_authenticated %}
+                <li><p style="padding:8px 0 0 10px;"><a href="/signup"
+                                                            class="btn btn-primary" style="color:#fff;">Sign Up For
+                                Free</a></p></li>
+                <li><a href="/login">Login</a></li>
+                {% else %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="/settings">Account settings</a></li>
+                      <li role="separator" class="divider"></li>
+                      <li><a href="/logout">Log out</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="content">
+        <div class="page-header">
+            <h3>Privacy Policy</h3>
+            <p>We go to great lengths to protect our users privacy. Here are some of the things we promise to do:</p>
+        </div>
+        <div class="page-body">
+            <ol>
+                <li>We will never publicize your email, password or any personal contact information.</li>
+                <li>We will never sell or offer your information to any third parties under any circumstances or laws.</li>
+                <li>We may use cookies to store your login session in order to log you in automatically.</li>
+                <li>We will never spam or use your email to send anything unrelated to Shoutcart.</li>
+                <li>We encrypt your passwords and dont have ability to view or change it, if you loose your password to your Shoutcart account, you will need to reset it using the email you signed up with. There is no other option.</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
