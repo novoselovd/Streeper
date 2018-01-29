@@ -51,6 +51,7 @@
   <div class="col-xs-12 col-sm-6 col-sm-offset-3">
       <form class="form-signin" method="POST" action="/signup">
           {{ form.hidden_tag() }}
+{#          {{ wtf.quick_form(form) }}#}
           {{ wtf.form_field(form.name) }}
           {{ wtf.form_field(form.email) }}
           {{ wtf.form_field(form.password) }}
