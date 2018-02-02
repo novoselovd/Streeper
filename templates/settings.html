@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block head %}
+    <style>
+        .center {
+            padding: 40px 15px;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">app</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/marketplace">Marketplace</a></li>
+                {% if not current_user.is_authenticated %}
+                <li><p style="padding:8px 0 0 10px;"><a href="/signup"
+                                                            class="btn btn-primary" style="color:#fff;">Sign Up For
+                                Free</a></p></li>
+                <li><a href="/login">Login</a></li>
+                {% else %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="/settings">Account settings</a></li>
+                      <li role="separator" class="divider"></li>
+                      <li><a href="/logout">Log out</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="content">
+        <div class="page-header">
+            <h3>My account</h3>
+        </div>
+        <div class="page-body">
+             {% with alerts = get_flashed_messages() %}
+        {% if alerts %}
+            {% for alert in alerts %}
+                {% if "Success" in alert %}
+                    <div class="alert alert-success">
+                      {{ alert }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                      {{ alert }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+            {% if current_user.email_confirmed == 0 %}
+                <div class="alert alert-warning">
+                    <strong>Please</strong>, confirm your email!
+                </div>
+            {% endif %}
+
+            <p>Name: {{ current_user.name }}</p>
+            <p>Email: {{ current_user.email }}</p>
+            <p>Account type: {{ current_user.type }}</p>
+            <p>Current balance: {{ current_user.current_balance }}$</p>
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">Change password</button>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Change password</h4>
+      </div>
+      <div class="modal-body">
+          <form method="POST" action="/settings">
+              {{ form.hidden_tag() }}
+              {{ wtf.form_field(form.current_password) }}
+              {{ wtf.form_field(form.new_password) }}
+              {{ wtf.form_field(form.new_password_confirm) }}
+              <div class="form-group">
+                <button type="submit" class="btn btn-success">Submit</button>
+              </div>
+          </form>
+      </div>
+{#      <div class="modal-footer">#}
+{#        <button type="submit" class="btn btn-success">Submit</button>#}
+{#      </div>#}
+
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

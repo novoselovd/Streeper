@@ -31,13 +31,13 @@
 
 <div class="container">
   <div class="panel-header">
-      <h2 class="text-center">Login</h2>
+      <h2 class="text-center">Reset password</h2>
   </div>
 
-    {% with alerts = get_flashed_messages() %}
+        {% with alerts = get_flashed_messages() %}
         {% if alerts %}
             {% for alert in alerts %}
-                {% if "Success" in alert %}
+                {% if "further" in alert %}
                     <div class="col-xs-12 col-sm-6 col-sm-offset-3">
                         <div class="alert alert-success">
                           {{ alert }}
@@ -54,20 +54,13 @@
         {% endif %}
     {% endwith %}
 
-
   <div class="col-xs-12 col-sm-6 col-sm-offset-3">
-      <form class="form-signin" method="POST" action="/login">
+      <form method="POST" action="/reset">
           {{ form.hidden_tag() }}
-          {{ wtf.form_field(form.email, horizontal_columns=('sm', 1, 5)) }}
-          {{ wtf.form_field(form.password, horizontal_columns=('sm', 2, 10)) }}
-          {{ wtf.form_field(form.remember) }}
+          {{ wtf.form_field(form.email) }}
           <div class="form-group">
-             <button type="submit" class="btn btn-primary">Login</button>
+             <button type="submit" class="btn btn-primary">Send new password</button>
           </div>
-          <div>
-              Forgot your password? <a href="/reset">Reset Password</a><br>
-              Don't have an account? <a href="/signup">Sign Up</a>
-      </div>
       </form>
   </div>
 </div>

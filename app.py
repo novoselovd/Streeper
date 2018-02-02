@@ -7,6 +7,9 @@ from flask_wtf import FlaskForm, Form
 from wtforms import StringField, PasswordField, BooleanField, SelectField, validators, IntegerField, SelectMultipleField
 from wtforms.validators import InputRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from generator import getrandompassword
 
 app = Flask(__name__)
 Bootstrap(app)
@@ -18,11 +21,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_BINDS'] = {'channels': 'sqlite:///{}'.format(channels_path)}
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SECRET_KEY'] = '2fHGGFdePK'
+app.config.from_pyfile('config.cfg')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+
+#Mail_settings
+mail = Mail(app)
+s = URLSafeTimedSerializer('giax5RHYLB')
 
 
 class User(UserMixin, db.Model):
@@ -31,6 +40,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(80))
     type = db.Column(db.String(30))
+    email_confirmed = db.Column(db.Boolean(), default=0)
+    current_balance = db.Column(db.Float(), default=0)
 
 
 class Channel(db.Model):
@@ -88,6 +99,18 @@ class CreateChannelForm(FlaskForm):
     price = IntegerField('Price', validators=[InputRequired()])
 
 
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Current password', validators=[InputRequired()])
+    new_password = PasswordField('New password', validators=[InputRequired(),
+                                                             validators.EqualTo('new_password_confirm', message='Passwords do not match.')])
+    new_password_confirm = PasswordField('Confirm new password', validators=[InputRequired()])
+
+
+#Сделал формой, но хз, наверно не имело смысла
+class ResetForm(FlaskForm):
+    email = StringField('Email', validators=[InputRequired(), Email(message='Incorrect email.'), Length(max=50)])
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -128,32 +151,43 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
 
+        #Отправка письма
+        token = s.dumps(form.email.data, salt='email-confirm')
+        msg = Message('Confirm Email', sender='ouramazingapp@gmail.com', recipients=[form.email.data])
+
+        link = url_for('confirm_email', token=token, _external=True)
+        msg.body = 'Your link is {}'.format(link)
+
+        mail.send(msg)
+
         flash("Success! Now you can log in.")
         return redirect(url_for('login'))
 
     return render_template('signup.html', form=form)
 
 
-@app.route('/add_marketplace', methods=['GET', 'POST'])
-@login_required
-def add_marketplace():
-    print(current_user.type)
-    if 'Brand/Agency' != current_user.type:
-        # flash('You can not access this page')
-        return redirect(url_for('marketplace'))
-    form = CreateChannelForm()
-    if form.validate_on_submit():
-        if Channel.query.filter_by(name=(form.name.data).lower()).first():
-            flash('Such marketplace already exists')
-            return redirect(url_for('marketplace'))
-        new_channel = Channel(name=form.name.data, description=form.description.data,
-                              subscribers=form.subscribers.data,
-                              price=form.price.data, category=form.category.data)
-        flash('Great! Your channel "%s" successfully added!' % new_channel.name)
+#TODO: доделать добавление площадки
 
-        db.session.add(new_channel)
-        db.session.commit()
-    return render_template('add_marketplace.html', form=form)
+
+# @app.route('/add_marketplace', methods=['GET', 'POST'])
+# @login_required
+# def add_marketplace():
+#     if 'Brand/Agency' != current_user.type:
+#         # flash('You can not access this page')
+#         return redirect(url_for('marketplace'))
+#     form = CreateChannelForm()
+#     if form.validate_on_submit():
+#         if Channel.query.filter_by(name=(form.name.data).lower()).first():
+#             flash('Such marketplace already exists')
+#             return redirect(url_for('marketplace'))
+#         new_channel = Channel(name=form.name.data, description=form.description.data,
+#                               subscribers=form.subscribers.data,
+#                               price=form.price.data, category=form.category.data)
+#         flash('Great! Your channel "%s" successfully added!' % new_channel.name)
+#
+#         db.session.add(new_channel)
+#         db.session.commit()
+#     return render_template('add_marketplace.html', form=form)
 
 
 @app.route('/marketplace')
@@ -179,15 +213,66 @@ def privacy():
     return render_template('privacy.html')
 
 
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
+# @app.route('/contact')
+# def contact():
+#     return render_template('contact.html')
 
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
-    return render_template('settings.html')
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if check_password_hash(current_user.password, form.current_password.data):
+            new_hashed_password = generate_password_hash(form.new_password.data, method='sha256')
+
+            curr = User.query.filter_by(email=current_user.email).first()
+            curr.password = new_hashed_password
+
+            db.session.commit()
+            flash('Successfully updated your password')
+            return redirect(url_for('settings'))
+        else:
+            flash('Current password is wrong')
+            return redirect(url_for('settings'))
+    return render_template('settings.html', form=form)
+
+
+@app.route('/confirm_email/<token>')
+def confirm_email(token):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=3600)
+        curr = User.query.filter_by(email=email).first()
+        curr.email_confirmed = 1
+        db.session.commit()
+    except SignatureExpired:
+        return '<h1>The confirmation link has expired...</h1>'
+    return render_template('confirm_email.html')
+
+
+@app.route('/reset', methods=['GET', 'POST'])
+def reset():
+    if current_user.is_authenticated:
+        return redirect(url_for('/'))
+    form = ResetForm()
+    if form.validate_on_submit():
+        if not User.query.filter_by(email=form.email.data.lower()).first():
+            flash("User with email you entered not found!")
+            return redirect(url_for('reset'))
+        else:
+            new_password = getrandompassword()
+            curr = User.query.filter_by(email=form.email.data.lower()).first()
+            curr.password = generate_password_hash(new_password, method='sha256')
+            db.session.commit()
+
+            msg = Message('Password reset', sender='ouramazingapp@gmail.com', recipients=[form.email.data])
+            msg.html = 'Your new password is <b>{}</b>, you can change it in account settings'.format(new_password)
+            mail.send(msg)
+
+            flash("Check your email for further instructions")
+            return redirect(url_for('reset'))
+
+    return render_template('reset.html', form=form)
 
 
 if __name__ == '__main__':
