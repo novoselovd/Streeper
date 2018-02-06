@@ -212,7 +212,8 @@ def add_marketplace():
 @app.route('/marketplace')
 @login_required
 def marketplace():
-    return render_template('marketplace.html')
+    channels = Channel.query.all()
+    return render_template('marketplace.html', channels=channels)
 
 
 @app.route('/logout')
