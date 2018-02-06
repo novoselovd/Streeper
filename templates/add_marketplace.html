@@ -12,6 +12,16 @@
 
 {% block content %}
 <!-- Navigation -->
+
+<script type="text/javascript">
+function fill_in(name, subscribers)
+{
+    form = document.forms['add_marketplace'];
+    form.elements['name'].value = name;
+    form.elements['subscribers'].value = subscribers;
+}
+</script>
+
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -36,10 +46,11 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
                       <li><a href="/settings">Account settings</a></li>
+                                                {% if current_user.type == 'Brand/Agency' %}
+                            <li><a href="/add_marketplace">Add marketplace</a></li>
+                            {% endif %}
                       <li role="separator" class="divider"></li>
                       <li><a href="/logout">Log out</a></li>
-                      <li role="separator" class="divider"></li>
-                      <li><a href="/add_marketplace">Log out</a></li>
                     </ul>
                 </li>
                 {% endif %}
@@ -82,10 +93,9 @@
   <div class="col-xs-12 col-sm-6 col-sm-offset-3">
       <form class="form-add_marketplace" method="POST" action="/add_marketplace">
           {{ form.hidden_tag() }}
-          {{ wtf.form_field(form.name) }}
+          {{ wtf.form_field(form.link) }}
           {{ wtf.form_field(form.category) }}
           {{ wtf.form_field(form.description) }}
-          {{ wtf.form_field(form.subscribers) }}
           {{ wtf.form_field(form.price) }}
           <div class="form-group" style="margin-top: 20px;">
              <button type="submit" class="btn btn-primary">Add Channel</button>

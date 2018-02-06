@@ -3,13 +3,15 @@ from flask import Flask, render_template, url_for, redirect, flash
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf import FlaskForm, Form
+from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SelectField, validators, IntegerField, SelectMultipleField
 from wtforms.validators import InputRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from generator import getrandompassword
+from channel_info import ChannelInfo
+
 
 app = Flask(__name__)
 Bootstrap(app)
@@ -47,11 +49,14 @@ class User(UserMixin, db.Model):
 class Channel(db.Model):
     __bind_key__ = 'channels'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
+    name = db.Column(db.String)
+    link = db.Column(db.String(50))
     description = db.Column(db.String(200))
     subscribers = db.Column(db.Integer)
     price = db.Column(db.Integer)
     category = db.Column(db.String(50))
+    image = db.Column(db.String)
+    admin_id = db.Column(db.Integer, db.ForeignKey(User.id))
 
 
 @login_manager.user_loader
@@ -79,7 +84,8 @@ class RegisterForm(FlaskForm):
 
 
 class CreateChannelForm(FlaskForm):
-    name = StringField('Channel', [InputRequired(), Length(min=1, max=50)])
+    link = StringField('Channel link', [InputRequired(), Length(min=1, max=50)])
+    name = StringField('Channel name')
     category_choices = [('cars', 'cars'), ('business', 'business'),
                         ('realty', 'realty'), ('medicine and health', 'medicine and health'),
                         ('marketing', 'marketing'), ('work', 'work'),
@@ -93,8 +99,8 @@ class CreateChannelForm(FlaskForm):
                         ('motivation and self-education', 'motivation and self-education'),
                         ('music', 'music'), ('cinematography', 'cinematography'),
                         ('top', 'top')]
-    category = SelectField('Keys', choices=category_choices)
-    description = StringField('Channel description', [Length(max=200)])
+    category = SelectField('Category', choices=category_choices)
+    description = StringField('Channel description', [InputRequired(), Length(max=200)])
     subscribers = IntegerField('Number of subscribers')
     price = IntegerField('Price', validators=[InputRequired()])
 
@@ -169,25 +175,38 @@ def signup():
 #TODO: доделать добавление площадки
 
 
-# @app.route('/add_marketplace', methods=['GET', 'POST'])
-# @login_required
-# def add_marketplace():
-#     if 'Brand/Agency' != current_user.type:
-#         # flash('You can not access this page')
-#         return redirect(url_for('marketplace'))
-#     form = CreateChannelForm()
-#     if form.validate_on_submit():
-#         if Channel.query.filter_by(name=(form.name.data).lower()).first():
-#             flash('Such marketplace already exists')
-#             return redirect(url_for('marketplace'))
-#         new_channel = Channel(name=form.name.data, description=form.description.data,
-#                               subscribers=form.subscribers.data,
-#                               price=form.price.data, category=form.category.data)
-#         flash('Great! Your channel "%s" successfully added!' % new_channel.name)
-#
-#         db.session.add(new_channel)
-#         db.session.commit()
-#     return render_template('add_marketplace.html', form=form)
+@app.route('/add_marketplace', methods=['GET', 'Post'])
+@login_required
+def add_marketplace():
+    if current_user.type != 'Brand/Agency':
+        flash('You cannot add a channel because of your account type!')
+        return redirect(url_for('marketplace'))
+    form = CreateChannelForm()
+    if form.validate_on_submit():
+        if Channel.query.filter_by(link=(form.link.data).lower()).first():
+            flash('Such marketplace already exists')
+            return redirect(url_for('add_marketplace'))
+        try:
+            # some magic with api inside ChannelInfo object
+            ci = ChannelInfo(form.link.data)
+            form.name.data = ci.name
+            new_channel = Channel(name=ci.name,
+                                  link=form.link.data, description=form.description.data,
+                                  subscribers=ci.subscribers,
+                                  price=form.price.data, category=form.category.data,
+                                  image=ci.photo, admin_id=current_user.id)
+
+            db.session.add(new_channel)
+            db.session.commit()
+
+            flash('Great! Your channel "%s" successfully added!' % new_channel.name)
+
+            return redirect(url_for('marketplace'))
+        except NameError:
+            flash('No such channel found or incorrect link given')
+            return redirect(url_for('add_marketplace'))
+
+    return render_template('add_marketplace.html', form=form)
 
 
 @app.route('/marketplace')
