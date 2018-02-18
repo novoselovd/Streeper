@@ -57,10 +57,10 @@
 
   <div class="col-xs-12 col-sm-6 col-sm-offset-3">
       <form class="form-signin" method="POST" action="/login">
-          {{ form.hidden_tag() }}
-          {{ wtf.form_field(form.email, horizontal_columns=('sm', 1, 5)) }}
-          {{ wtf.form_field(form.password, horizontal_columns=('sm', 2, 10)) }}
-          {{ wtf.form_field(form.remember) }}
+          {{ q.hidden_tag() }}
+          {{ wtf.form_field(q.email, horizontal_columns=('sm', 1, 5)) }}
+          {{ wtf.form_field(q.password, horizontal_columns=('sm', 2, 10)) }}
+          {{ wtf.form_field(q.remember) }}
           <div class="form-group">
              <button type="submit" class="btn btn-primary">Login</button>
           </div>

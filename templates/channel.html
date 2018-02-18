@@ -51,10 +51,18 @@
     <!-- /.container -->
 </nav>
 
+
+<!-- Page Content -->
+<div class="container">
+    <div class="content">
+        <div class="page-header">
+            <h3>Channel info</h3>
+        </div>
+        <div class="page-body">
              {% with alerts = get_flashed_messages() %}
         {% if alerts %}
             {% for alert in alerts %}
-                {% if "Great" in alert %}
+                {% if "Success" in alert %}
                     <div class="alert alert-success">
                       {{ alert }}
                     </div>
@@ -66,48 +74,17 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-
-
-<!-- Page Content -->
-{#<div class="container">#}
-{#    <div class="row">#}
-{#        <div class="center-block">#}
-{#            <div class="embed-responsive embed-responsive-16by9">#}
-{#                <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/iQO9yRutpso" allowfullscreen></iframe>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#</div>#}
-
-
-
-<div class="container">
-  <h2>Marketplace</h2>
-  <p>Here you can find a database of channels</p>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Channel name</th>
-        <th>Category</th>
-        <th>Subscribers</th>
-        <th>Price</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in channels %}
-          <tr>
-            <td><a href="/channel/{{ row.link[1:] }}">{{ row.name }}</a></td>
-            <td>{{ row.category }}
-            <td>{{ row.subscribers }}</td>
-            <td>{{ row.price }}</td>
-              {% if current_user.type!="Brand/Agency" %}
-            <td><button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">Advertise here</button></td>
-          {% endif %}
-          </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            <img src="/Users/dmitry/Desktop/app/file_32.jpg">
+            <p>Channel name: {{ chan.name }}</p>
+            <p>Description : {{ chan.description }}</p>
+            <p>Subscribers: {{ chan.subscribers }}</p>
+            <p>Category: {{ chan.category }}</p>
+            <p>Price per post: {{ chan.price }}$</p>
+        {% if current_user.type=="Creator/Influencer" %}
+           <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">Advertise here</button>
+        {% endif %}
+        </div>
+    </div>
 </div>
 
             <!-- Modal -->
