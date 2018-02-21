@@ -1,6 +1,5 @@
 import os
 import models
-import update
 from flask import Flask, render_template, url_for, redirect, flash, request, abort
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -129,11 +128,34 @@ def add_marketplace():
     return render_template('add_marketplace.html', form=form)
 
 
-@app.route('/marketplace')
+@app.route('/marketplace', methods=['GET', 'POST'])
 @login_required
 def marketplace():
     channels = models.Channel.query.all()
-    return render_template('marketplace.html', channels=channels)
+    if request.method == 'POST':
+        category = request.form['sel']
+        price = request.form['pf'].split(',')
+        subscribers = request.form['sf'].split(',')
+        if category.lower() == 'all':
+            channels = models.Channel.query.filter(models.Channel.price >= price[0]).\
+                filter(models.Channel.price <= price[1]).\
+                filter(models.Channel.subscribers >= subscribers[0]).\
+                filter(models.Channel.subscribers <= subscribers[1])
+
+            return render_template('marketplace.html', channels=channels, curr_cat=category, curr_price=price,
+                           curr_subs=subscribers)
+        else:
+            channels = models.Channel.query.filter(models.Channel.price >= price[0]). \
+                filter(models.Channel.price <= price[1]). \
+                filter(models.Channel.subscribers >= subscribers[0]). \
+                filter(models.Channel.subscribers <= subscribers[1]). \
+                filter(models.Channel.category == category.lower())
+
+            return render_template('marketplace.html', channels=channels, curr_cat=category, curr_price=price,
+                           curr_subs=subscribers)
+
+    return render_template('marketplace.html', channels=channels, curr_cat='All', curr_price=[10, 10000],
+                           curr_subs=[0, 300000])
 
 
 @app.route('/logout')
@@ -226,5 +248,5 @@ def reset():
 
 
 if __name__ == '__main__':
-    #update.run()
+    # update.run()
     app.run(debug=True)

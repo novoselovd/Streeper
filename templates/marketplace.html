@@ -6,6 +6,7 @@
         .starter-template {
             padding: 40px 15px;
             text-align: center;
+                width: 100%;
         }
     </style>
 {% endblock %}
@@ -20,6 +21,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
+                z
             </button>
             <a class="navbar-brand" href="/">app</a>
         </div>
@@ -68,41 +70,233 @@
     {% endwith %}
 
 
-<!-- Page Content -->
-{#<div class="container">#}
-{#    <div class="row">#}
-{#        <div class="center-block">#}
-{#            <div class="embed-responsive embed-responsive-16by9">#}
-{#                <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/iQO9yRutpso" allowfullscreen></iframe>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#</div>#}
-
-
-
 <div class="container">
   <h2>Marketplace</h2>
   <p>Here you can find a database of channels</p>
 
-  <table class="table">
+{##}
+{#<div class="row">#}
+{#  <div class="col-lg-12">#}
+{#    <div class="input-group">#}
+{#      <input type="text" id="input" class="form-control" placeholder="Search for...">#}
+{#      <span class="input-group-btn">#}
+{#        <button class="btn btn-secondary" type="button" onclick="srch();">Go!</button>#}
+{#      </span>#}
+{#    </div>#}
+{#  </div>#}
+{#</div>#}
+
+<br>
+
+<form method="POST" action="/marketplace">
+<div class="row">
+  <div class="form-group col-xs-4">
+    <select class="form-control" name="sel">
+        {% if curr_cat=='All' %}
+            <option selected>All</option>
+        {% else %}
+            <option>All</option>
+        {% endif %}
+
+            {% if curr_cat=='Cars' %}
+            <option selected>Cars</option>
+        {% else %}
+            <option>Cars</option>
+        {% endif %}
+
+            {% if curr_cat=='Business' %}
+            <option selected>Business</option>
+        {% else %}
+            <option>Business</option>
+        {% endif %}
+
+                {% if curr_cat=='Medicine and health' %}
+            <option selected>Medicine and health</option>
+        {% else %}
+            <option>Medicine and health</option>
+        {% endif %}
+
+                    {% if curr_cat=='Marketing' %}
+            <option selected>Marketing</option>
+        {% else %}
+            <option>Marketing</option>
+        {% endif %}
+
+
+                        {% if curr_cat=='Work' %}
+            <option selected>Work</option>
+        {% else %}
+            <option>Work</option>
+        {% endif %}
+
+
+                            {% if curr_cat=='Travelling' %}
+            <option selected>Travelling</option>
+        {% else %}
+            <option>Travelling</option>
+        {% endif %}
+
+                                {% if curr_cat=='For women' %}
+            <option selected>For women</option>
+        {% else %}
+            <option>For women</option>
+        {% endif %}
+
+                                    {% if curr_cat=='Sport' %}
+            <option selected>Sport</option>
+        {% else %}
+            <option>Sport</option>
+        {% endif %}
+
+                                        {% if curr_cat=='Culture' %}
+            <option selected>Culture</option>
+        {% else %}
+            <option>Culture</option>
+        {% endif %}
+
+                                            {% if curr_cat=='Education' %}
+            <option selected>Education</option>
+        {% else %}
+            <option>Education</option>
+        {% endif %}
+
+        {% if curr_cat=='Products and services' %}
+            <option selected>Products and services</option>
+        {% else %}
+            <option>Products and services</option>
+        {% endif %}
+
+
+        {% if curr_cat=='18+' %}
+            <option selected>18+</option>
+        {% else %}
+            <option>18+</option>
+        {% endif %}
+
+
+            {% if curr_cat=='Design and decor' %}
+            <option selected>Design and decor</option>
+        {% else %}
+            <option>Design and decor</option>
+        {% endif %}
+
+                {% if curr_cat=='Games' %}
+            <option selected>Games</option>
+        {% else %}
+            <option>Games</option>
+        {% endif %}
+
+                    {% if curr_cat=='Entertainment' %}
+            <option selected>Entertainment</option>
+        {% else %}
+            <option>Entertainment</option>
+        {% endif %}
+
+                        {% if curr_cat=='Science and technology' %}
+            <option selected>Science and technology</option>
+        {% else %}
+            <option>Science and technology</option>
+        {% endif %}
+
+                            {% if curr_cat=='Foreign languages' %}
+            <option selected>Foreign languages</option>
+        {% else %}
+            <option>Foreign languages</option>
+        {% endif %}
+
+
+                                {% if curr_cat=='Motivation and self-education' %}
+            <option selected>Motivation and self-education</option>
+        {% else %}
+            <option>Motivation and self-education</option>
+        {% endif %}
+
+
+                                        {% if curr_cat=='Music' %}
+            <option selected>Music</option>
+        {% else %}
+            <option>Music</option>
+        {% endif %}
+
+                                            {% if curr_cat=='Cinematography' %}
+            <option selected>Cinematography</option>
+        {% else %}
+            <option>Cinematography</option>
+        {% endif %}
+
+                                            {% if curr_cat=='Top' %}
+            <option selected>Top</option>
+        {% else %}
+            <option>Top</option>
+        {% endif %}
+
+    </select>
+  </div>
+
+{##}
+{#        <div class="form-group col-xs-8">#}
+{#<div class="dropdown pull-right">#}
+{#                                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1"#}
+{#                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">Sort#}
+{#                                        By <span#}
+{#                                                class="caret"></span></button>#}
+{#                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">#}
+{#                                        <li data-name="price"><a href="#" onclick="sortTable('my_table', 2);">Price ↑#}
+{#                                                                                            </a></li>#}
+{#                                        <li data-name="price"><a href="#" onclick="sortTableReversed('my_table', 2);">Price ↓#}
+{#                                                                                            </a></li>#}
+{#                                        <li data-name="subscribers"><a href="#" onclick="sortTable('my_table', 1);">Subscribers ↑#}
+{#                                                                                                                                                            <i class="fa fa-arrow-down"></i>#}
+{##}
+{##}
+{#                                                                                            </a></li>#}
+{#                                        <li data-name="subscribers"><a href="#" onclick="sortTableReversed('my_table', 1);">Subscribers ↓#}
+{#                                                                                                                                                            <i class="fa fa-arrow-down"></i>#}
+{##}
+{#                                                                                            </a></li>#}
+{#                                    </ul>#}
+{#                                </div>#}
+{#        </div>#}
+</div>
+<div class="row">
+    <div class="form-group col-xs-8">
+        Filter by price: <b>$10&nbsp;&nbsp;&nbsp;</b> <input name="pf" id="ex2" type="text" class="span2" value="" data-slider-min="10" data-slider-max="10000" data-slider-step="5" data-slider-value="[{{ curr_price[0] }},{{ curr_price[1] }}]"/> <b>&nbsp;&nbsp;&nbsp;$10000</b>
+    </div>
+</div>
+
+<div class="row">
+    <div class="form-group col-xs-8">
+        Filter by subscribers: <b>0&nbsp;&nbsp;&nbsp;</b> <input name="sf" id="ex3" type="text" class="span2" value="" data-slider-min="0" data-slider-max="300000" data-slider-step="1" data-slider-value="[{{ curr_subs[0] }},{{ curr_subs[1] }}]"/> <b>&nbsp;&nbsp;&nbsp;300k</b>
+    </div>
+</div>
+
+<div class="row">
+    <div class="form-group col-xs-8">
+        <button type="submit" value="upvote" class="btn btn-primary">Update</button>
+    </div>
+</div>
+</form>
+
+
+  <table class="table table-striped table-bordered" id="my_table" cellspacing="0">
     <thead>
       <tr>
         <th>Channel name</th>
         <th>Category</th>
         <th>Subscribers</th>
         <th>Price</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for row in channels %}
           <tr>
             <td><a href="/channel/{{ row.link[1:] }}">{{ row.name }}</a></td>
-            <td>{{ row.category }}
+            <td>{{ row.category }}</td>
             <td>{{ row.subscribers }}</td>
             <td>{{ row.price }}</td>
               {% if current_user.type!="Brand/Agency" %}
-            <td><button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">Advertise here</button></td>
+            <td><button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#myModal">Advertise here</button></td>
           {% endif %}
           </tr>
       {% endfor %}
@@ -138,5 +332,76 @@
   </div>
 </div>
 
+
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#my_table').DataTable();
+            $("#ex2").slider({});
+            $("#ex3").slider({});
+        } );
+    </script>
+
+<script type="text/javascript">
+function sortTable(table_id, sortColumn){
+    var tableData = document.getElementById(table_id).getElementsByTagName('tbody').item(0);
+    var rowData = tableData.getElementsByTagName('tr');
+    for(var i = 0; i < rowData.length - 1; i++){
+        for(var j = 0; j < rowData.length - (i + 1); j++){
+            if(Number(rowData.item(j).getElementsByTagName('td').item(sortColumn).innerHTML.replace(/[^0-9\.]+/g, "")) < Number(rowData.item(j+1).getElementsByTagName('td').item(sortColumn).innerHTML.replace(/[^0-9\.]+/g, ""))){
+                tableData.insertBefore(rowData.item(j+1),rowData.item(j));
+            }
+        }
+    }
+}
+
+function srch() {
+  var input, filter, table, tr, td, i;
+  input = document.getElementById("input");
+  filter = input.value.toUpperCase();
+  table = document.getElementById("my_table");
+  tr = table.getElementsByTagName("tr");
+
+  for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[0];
+    if (td) {
+      if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }
+  }
+}
+
+
+function getval(sel)
+{
+    var td, i;
+    var input = sel.value.toLowerCase();
+    var table = document.getElementById("my_table");
+    var tr = table.getElementsByTagName("tr");
+
+    {#alert(input);#}
+
+    for (i = 0; i < tr.length; i++) {
+        td = tr[i].getElementsByTagName("td")[1];
+        {#alert(td.innerHTML.toLowerCase());#}
+        if (td) {
+            if (td.innerHTML.toLowerCase().indexOf(input) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+
+    var q = document.getElementById("my_table");
+    g.DataTable();
+}
+
+</script>
 
 {% endblock %}
