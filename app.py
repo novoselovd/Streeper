@@ -1,5 +1,6 @@
 import os
 import models
+import requests
 from flask import Flask, render_template, url_for, redirect, flash, request, abort
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -30,6 +31,9 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 
+import models
+
+
 #Mail_settings
 mail = Mail(app)
 s = URLSafeTimedSerializer('giax5RHYLB')
@@ -38,6 +42,7 @@ s = URLSafeTimedSerializer('giax5RHYLB')
 @login_manager.user_loader
 def load_user(user_id):
     return models.User.query.get(int(user_id))
+
 
 @app.route('/')
 def index():
@@ -112,13 +117,13 @@ def add_marketplace():
             new_channel = models.Channel(name=ci.name,
                                   link=ci.chat_id, description=form.description.data,
                                   subscribers=ci.subscribers,
-                                  price=form.price.data, category=form.category.data,
+                                  price=form.price.data, secret=getrandompassword(), category=form.category.data,
                                   image=ci.photo, admin_id=current_user.id)
 
             db.session.add(new_channel)
             db.session.commit()
 
-            flash('Great! Your channel "%s" successfully added!' % new_channel.name)
+            flash('Great! Now you can confirm ownership in account settings section')
 
             return redirect(url_for('marketplace'))
         except NameError:
@@ -131,7 +136,7 @@ def add_marketplace():
 @app.route('/marketplace', methods=['GET', 'POST'])
 @login_required
 def marketplace():
-    channels = models.Channel.query.all()
+    channels = models.Channel.query.filter(models.Channel.confirmed == 1)
     if request.method == 'POST':
         category = request.form['sel']
         price = request.form['pf'].split(',')
@@ -140,7 +145,8 @@ def marketplace():
             channels = models.Channel.query.filter(models.Channel.price >= price[0]).\
                 filter(models.Channel.price <= price[1]).\
                 filter(models.Channel.subscribers >= subscribers[0]).\
-                filter(models.Channel.subscribers <= subscribers[1])
+                filter(models.Channel.subscribers <= subscribers[1]).\
+                filter(models.Channel.confirmed == 1)
 
             return render_template('marketplace.html', channels=channels, curr_cat=category, curr_price=price,
                            curr_subs=subscribers)
@@ -149,7 +155,8 @@ def marketplace():
                 filter(models.Channel.price <= price[1]). \
                 filter(models.Channel.subscribers >= subscribers[0]). \
                 filter(models.Channel.subscribers <= subscribers[1]). \
-                filter(models.Channel.category == category.lower())
+                filter(models.Channel.category == category.lower()). \
+                filter(models.Channel.confirmed == 1)
 
             return render_template('marketplace.html', channels=channels, curr_cat=category, curr_price=price,
                            curr_subs=subscribers)
@@ -184,7 +191,9 @@ def contact():
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
+    channels = models.Channel.query.filter(models.Channel.admin_id == current_user.id)
     form = ChangePasswordForm()
+
     if form.validate_on_submit():
         if check_password_hash(current_user.password, form.current_password.data):
             new_hashed_password = generate_password_hash(form.new_password.data, method='sha256')
@@ -198,7 +207,40 @@ def settings():
         else:
             flash('Current password is wrong')
             return redirect(url_for('settings'))
-    return render_template('settings.html', form=form)
+    # elif request.method == 'POST':
+    #     print('gay')
+    #     return redirect('/')
+
+    return render_template('settings.html', form=form, channels=channels)
+
+
+@app.route('/confirm_channel', methods=['POST', 'GET'])
+@login_required
+def confirm_channel():
+    secret = request.args.get('secret')
+    channel = models.Channel.query.filter(models.Channel.secret == secret)
+    if channel:
+        r = requests.get(
+            'https://api.telegram.org/bot435931033:AAHtZUDlQ0DeQVUGNIGpTFhcV1u3wXDjKJY/getChat?chat_id=%s'
+            % channel[0].link)
+        if not r.json()['ok']:
+            flash('Something went wrong')
+            return redirect('/settings')
+        else:
+            response = r.json()['result']['description']
+            if secret in response:
+                ch = models.Channel.query.filter_by(secret=secret).first()
+                test = db.session.query(models.Channel).filter_by(secret=secret).first()
+                test.confirmed = 1
+                db.session.commit()
+                flash('Successfully added your channel into our base!')
+                return redirect('/marketplace')
+            else:
+                flash('Could not find the secret key')
+                return redirect('/settings')
+    else:
+        abort(404)
+
 
 
 @app.route('/confirm_email/<token>')
@@ -220,6 +262,13 @@ def channel(r):
     if not chan:
         abort(404)
     return render_template('channel.html', chan=chan)
+
+
+# def confirm_ownership():
+#     if request.method == 'POST':
+#         category = request.form['test']
+#         print(category)
+#     return redirect('/settings')
 
 
 @app.route('/reset', methods=['GET', 'POST'])

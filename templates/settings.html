@@ -84,6 +84,40 @@
             <p>Email: {{ current_user.email }}</p>
             <p>Account type: {{ current_user.type }}</p>
             <p>Current balance: {{ current_user.current_balance }}$</p>
+            {% if current_user.type == "Brand/Agency" %}
+                <p>My channels: </p><br>
+<table class="table table-sm table-dark">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Channel </th>
+      <th scope="col">Confirmed</th>
+      <th scope="col">Secret key</th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  <tbody>
+
+  {% for row in channels %}
+          <tr>
+{#              <form method="POST" action="/settings">#}
+                <td scope="row">{{ loop.index }}</td>
+                <td id="test">{{ row.name }}</td>
+                  {% if row.confirmed==0 %}
+                      <td>No</td>
+                      <td><b>{{ row.secret }}</b></td>
+                      <td><a href="/confirm_channel?secret={{ row.secret }}"><button class="btn btn-warning">Confirm</button></a></td>
+                  {% else %}
+                      <td>Yes</td>
+                      <td></td>
+                      <td></td>
+                  {% endif %}
+{#              </form>#}
+          </tr>
+  {% endfor %}
+  </tbody>
+</table>
+            {% endif %}
             <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">Change password</button>
         </div>
     </div>
@@ -107,6 +141,38 @@
               {{ wtf.form_field(form.new_password_confirm) }}
               <div class="form-group">
                 <button type="submit" class="btn btn-success">Submit</button>
+              </div>
+          </form>
+      </div>
+{#      <div class="modal-footer">#}
+{#        <button type="submit" class="btn btn-success">Submit</button>#}
+{#      </div>#}
+
+    </div>
+
+  </div>
+</div>
+
+
+        <!-- Modal1 -->
+<div id="myModal1" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Confirm your channel</h4>
+      </div>
+      <div class="modal-body">
+          <form method="POST" action="/confirm_ownership">
+              {{ form.hidden_tag() }}
+              <p>To prove your ownership of the channel just add the code from 'Secret key' section into any place of
+                  description of your channel. Then click confirm button. If our bot successfully finds the key
+              your channel will be added to our database. After that you can change the description back to what it
+                  was or anything else.</p>
+              <div class="form-group">
+                <button type="submit" class="btn btn-success">Check</button>
               </div>
           </form>
       </div>

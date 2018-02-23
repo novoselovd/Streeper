@@ -60,6 +60,10 @@
                     <div class="alert alert-success">
                       {{ alert }}
                     </div>
+                {% elif "Succ" in alert %}
+                    <div class="alert alert-success">
+                      {{ alert }}
+                    </div>
                 {% else %}
                     <div class="alert alert-danger">
                       {{ alert }}
@@ -86,12 +90,11 @@
 {#  </div>#}
 {#</div>#}
 
-<br>
-
 <form method="POST" action="/marketplace">
 <div class="row">
   <div class="form-group col-xs-4">
-    <select class="form-control" name="sel">
+      <label for="sel1">Choose category:</label>
+    <select class="form-control" name="sel" id="sel1">
         {% if curr_cat=='All' %}
             <option selected>All</option>
         {% else %}
@@ -282,22 +285,21 @@
     <thead>
       <tr>
         <th>Channel name</th>
-        <th>Category</th>
+{#        <th>Category</th>#}
         <th>Subscribers</th>
         <th>Price</th>
-        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for row in channels %}
           <tr>
             <td><a href="/channel/{{ row.link[1:] }}">{{ row.name }}</a></td>
-            <td>{{ row.category }}</td>
+{#            <td>{{ row.category }}</td>#}
             <td>{{ row.subscribers }}</td>
             <td>{{ row.price }}</td>
-              {% if current_user.type!="Brand/Agency" %}
-            <td><button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#myModal">Advertise here</button></td>
-          {% endif %}
+{#              {% if current_user.type!="Brand/Agency" %}#}
+{#                <td><button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#myModal">Advertise here</button></td>#}
+{#              {% endif %}#}
           </tr>
       {% endfor %}
     </tbody>
