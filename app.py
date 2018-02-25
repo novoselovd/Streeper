@@ -1,4 +1,5 @@
 import os
+import numbers
 from flask import Flask, render_template, url_for, redirect, flash, request, abort
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -14,6 +15,8 @@ from channel_info import ChannelInfo
 import models
 import stripe
 import requests
+from lxml import html
+
 
 app = Flask(__name__)
 Bootstrap(app)
@@ -205,6 +208,9 @@ def settings():
         for j in i.requests.all():
             req += 1
 
+
+    tu = TopUpBalanceForm()
+
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if check_password_hash(current_user.password, form.current_password.data):
@@ -219,7 +225,27 @@ def settings():
         else:
             flash('Current password is wrong')
             return redirect(url_for('settings'))
-    return render_template('settings.html', form=form, channels=channels, user=current_user, req=req)
+
+    if tu.validate_on_submit() and request.method == 'POST':
+        customer = stripe.Customer.create(email=request.form['stripeEmail'],
+                                          source=request.form['stripeToken'])
+        charge = stripe.Charge.create(
+            customer=customer,
+            amount=tu.amount.data,
+            currency='usd',
+            description='Posting'
+        )
+
+        curr = db.session.query(models.User).filter_by(email=current_user.email).first()
+        curr.current_balance = curr.current_balance + form.amount.data
+
+        db.session.commit()
+
+        flash('Successfully replenished your balance!')
+        return redirect('/settings')
+
+
+    return render_template('settings.html', form=form, channels=channels, user=current_user, req=req, tu=tu)
 
 
 @app.route('/user/<uniqid>', methods=['GET', 'POST'])
@@ -227,50 +253,15 @@ def settings():
 def user(uniqid):
     if str(current_user.id) != uniqid:
         abort(404)
-    else:
-        curr = db.session.query(models.User).filter_by(email=current_user.email).first()
-        if curr is None:
-            flash('User\'s id ' + uniqid + ' not found.')
-            return redirect(url_for('index'))
-
-        form = TopUpBalanceForm()
-
-        if form.validate_on_submit() and request.method == 'POST':
-            customer = stripe.Customer.create(email=request.form['stripeEmail'],
-                                              source=request.form['stripeToken'])
-            charge = stripe.Charge.create(
-                customer=customer,
-                amount=form.amount.data,
-                currency='usd',
-                description='Posting'
-            )
-            curr.current_balance = curr.current_balance + form.amount.data
-            db.session.commit()
-            flash('Successfully replenished your balance!')
-            return redirect('/user/' + uniqid)
+    curr = db.session.query(models.User).filter_by(email=current_user.email).first()
+    if curr is None:
+        flash('User\'s id ' + uniqid + ' not found.')
+        return redirect(url_for('index'))
 
     return render_template('user.html',
-                           form=form,
                            user=curr,
                            )
 
-
-@app.route('/accept_request', methods=['POST', 'GET'])
-@login_required
-def accept_request():
-    request_post = request.args.get('request')
-    request_post.confirmed = True
-    db.session.commit()
-    flash('Great! You now have 48 hours to post the ad!')
-    return redirect('/user/%s' % current_user.id)
-
-
-@app.route('/decline_request', methods=['POST', 'GET'])
-@login_required
-def decline_request():
-    request_post = request.args.get('request')
-    flash('Got rid of that one!')
-    return redirect('/user/%s' % current_user.id)
 
 
 @app.route('/confirm_channel', methods=['POST', 'GET'])
@@ -336,6 +327,9 @@ def channel(r):
         abort(404)
     form = CreatePostForm()
     if form.validate_on_submit():
+        if current_user.current_balance < chan.price:
+            flash("You do not have enough funds to advertise here")
+            return redirect("/channel/" + r)
         post = models.Post(content=form.content.data,
                            link=form.link.data,
                            comment=form.comment.data,
@@ -343,6 +337,12 @@ def channel(r):
                            user_id=current_user.id)
         db.session.add(post)
         db.session.commit()
+
+        user = db.session.query(models.User).filter_by(email=current_user.email).first()
+        user.current_balance -= chan.price
+        db.session.commit()
+
+
         flash('Great! Your request successfully sent to "%s"\'s administrator!' % chan.name)
         return redirect(url_for('marketplace'))
     return render_template('channel.html', chan=chan, form=form)
@@ -373,7 +373,7 @@ def reset():
     return render_template('reset.html', form=form)
 
 
-@app.route('/withdrawal', methods=['GET','POST'])
+@app.route('/withdrawal', methods=['GET', 'POST'])
 @login_required
 def withdrawal():
     form = WithdrawalForm()
@@ -400,6 +400,122 @@ def withdrawal():
             flash('Your request was successfully sent')
             return redirect('/withdrawal')
     return render_template('withdrawal.html', form=form, w=w)
+
+
+@app.route('/accept_request', methods=['POST', 'GET'])
+@login_required
+def accept_request():
+    request_post = db.session.query(models.Post).filter_by(id=int(request.args.get('request_id'))).first()
+    request_post.confirmed = True
+    db.session.commit()
+    flash('Great! You now have to confirm your posting via ad post\'s SHARE LINK!')
+    return redirect('/user/%s' % current_user.id)
+
+
+@app.route('/decline_request', methods=['POST', 'GET'])
+@login_required
+def decline_request():
+    request_post = db.session.query(models.Post).filter_by(id=int(request.args.get('request_id'))).first()
+    request_post.declined = 1
+    db.session.commit()
+
+    userForCashback = db.session.query(models.User).filter_by(id=request_post.user_id).first()
+    chan = db.session.query(models.Channel).filter_by(id=request_post.channel_id).first()
+    userForCashback.current_balance += chan.price
+    db.session.commit()
+
+    flash('Got rid of that one!')
+    return redirect('/user/%s' % current_user.id)
+
+
+@app.route('/rollback', methods=['POST', 'GET'])
+@login_required
+def rollback():
+    request_post = db.session.query(models.Post).filter_by(id=int(request.args.get('post_id'))).first()
+    db.session.delete(request_post)
+    db.session.commit()
+
+    userForCashback = db.session.query(models.User).filter_by(id=request_post.user_id).first()
+    chan = db.session.query(models.Channel).filter_by(id=request_post.channel_id).first()
+    userForCashback.current_balance += chan.price
+    db.session.commit()
+
+    flash('Great! Successfully canceled your request!')
+    return redirect('/user/%s' % current_user.id)
+
+
+@app.route('/switch_channel', methods=['POST', 'GET'])
+@login_required
+def switch_channel():
+    request_post = db.session.query(models.Post).filter_by(id=int(request.args.get('post_id'))).first()
+    return redirect('/user/%s' % current_user.id)
+
+
+@app.route('/remove_row', methods=['POST', 'GET'])
+@login_required
+def remove_row():
+    request_post = db.session.query(models.Post).filter_by(id=int(request.args.get('post_id'))).first()
+    db.session.delete(request_post)
+    db.session.commit()
+    return redirect('/user/%s' % current_user.id)
+
+
+@app.route('/addfunds', methods=['GET', 'POST'])
+@login_required
+def addfunds():
+    form = TopUpBalanceForm()
+    curr = db.session.query(models.User).filter_by(email=current_user.email).first()
+
+    if form.validate_on_submit() and request.method == 'POST':
+
+        if isinstance(form.amount.data, int) and form.amount.data > 1:
+            customer = stripe.Customer.create(email=request.form['stripeEmail'],
+                                              source=request.form['stripeToken'])
+            charge = stripe.Charge.create(
+                customer=customer,
+                amount=form.amount.data*100,
+                currency='usd',
+                description='Posting'
+            )
+
+            curr.current_balance = curr.current_balance + form.amount.data
+            db.session.commit()
+
+            flash('Successfully replenished your balance!')
+            return redirect('/settings')
+        else:
+            flash('Ooops...Something went wrong')
+            return redirect('/settings')
+
+    return render_template('addfunds.html', form=form)
+
+
+@app.route('/confirmSHARELINK', methods=['POST', 'GET'])
+@login_required
+def confirmSHARELINK():
+    link = request.form["link"]
+
+    curr = db.session.query(models.User).filter_by(id=current_user.id).first()
+
+    request_post = db.session.query(models.Post).filter_by(id=int(request.form['request_id'])).first()
+    r = requests.get(link)
+    text = r.text
+    tree = html.fromstring(text)
+    message = tree.xpath('//meta[@name="twitter:description"]/@content')[0]
+    if request_post.link in message and request_post.content in message:
+        request_post.posted = 1
+        request_post.SHARELINK = link
+        db.session.commit()
+
+        t = db.session.query(models.Channel).filter_by(id=request_post.channel_id).first()
+        curr.current_balance += t.price
+        db.session.commit()
+        flash("Great! In 48 hours we will check out the post existence and transfer money to your virtual wallet!")
+
+    else:
+        flash('Oops... Didn\'t find the post or it differs from the requested one.')
+
+    return redirect('/user/%s' % current_user.id)
 
 
 if __name__ == '__main__':

@@ -35,8 +35,11 @@
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                      <li><a href="/user/{{ current_user.id }}">Profile</a></li>
                       <li><a href="/settings">Account settings</a></li>
+                    <li><a href="/user/{{ current_user.id }}">Requests and posts</a></li>
+                                                                 {% if current_user.type != 'Brand/Agency' %}
+                            <li><a href="/addfunds">Add funds</a></li>
+                            {% endif %}
                                           <li><a href="/withdrawal">Withdrawal</a></li>
                          {% if current_user.type == 'Brand/Agency' %}
                             <li><a href="/add_channel">Add channel</a></li>
@@ -86,8 +89,9 @@
             <p>Email: {{ current_user.email }}</p>
             <p>Account type: {{ current_user.type }}</p>
             <p>Current balance: {{ current_user.current_balance }}$</p>
+
             {% if current_user.type == "Brand/Agency" %}
-                <p><b>My requests:</b> <a data-target="#qqq" data-toggle="modal" href="#qqq">{{ req }}</a></p>
+{#                <p><b>My requests:</b> <a data-target="#qqq" data-toggle="modal" href="#qqq">{{ req }}</a></p>#}
                 <p>My channels:</p>
 <table class="table table-sm table-dark">
   <thead>
@@ -123,21 +127,9 @@
   {% endfor %}
   </tbody>
 </table>
-
-
-
-
-
-
-
-
             {% endif %}
-        <div class="row">
+
             <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">Change password</button>
-            {% if current_user.type!="Brand/Agency" %}
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#ttt">Add funds</button>
-            {% endif %}
-        </div>
         </div>
     </div>
 </div>
@@ -258,17 +250,30 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Deleting channel from database</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Adding funds</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        Are you sure?
+        <form action="/user/{{ current_user.id }}" method="POST">
+                            {{ tu.hidden_tag() }}
+            {{ wtf.form_field(tu.amount) }}
+            <!-- Script to top up the balance. -->
+
+            <!-- Script to get money from virtual wallet. -->
+        </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="https://google.com" id="link"><button type="button" class="btn btn-primary">Yes, delete it</button></a>
+                        <script
+                        src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                        data-key="pk_test_rW2nCw0ukmmWD7KWQwIzWOlW"
+                        data-amount="{{ tu.amount.data }}"
+                        data-name="Demo Site"
+                        data-description="Example charge"
+                        data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+                        data-locale="auto">
+                </script>
       </div>
     </div>
   </div>

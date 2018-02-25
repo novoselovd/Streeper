@@ -2,6 +2,7 @@
 {% import "wtf.html" as wtf %}
 
 {% block content %}
+<!-- Navigation -->
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -27,7 +28,7 @@
                     <ul class="dropdown-menu">
                       <li><a href="/settings">Account settings</a></li>
                     <li><a href="/user/{{ current_user.id }}">Requests and posts</a></li>
-                                                                 {% if current_user.type != 'Brand/Agency' %}
+                                             {% if current_user.type != 'Brand/Agency' %}
                             <li><a href="/addfunds">Add funds</a></li>
                             {% endif %}
                                           <li><a href="/withdrawal">Withdrawal</a></li>
@@ -49,13 +50,13 @@
 
 <div class="container">
   <div class="panel-header">
-      <h2 class="text-center">Login</h2>
+      <h2 class="text-center">Add funds</h2>
   </div>
 
     {% with alerts = get_flashed_messages() %}
         {% if alerts %}
             {% for alert in alerts %}
-                {% if "Success" in alert %}
+                {% if "success" in alert %}
                     <div class="col-xs-12 col-sm-6 col-sm-offset-3">
                         <div class="alert alert-success">
                           {{ alert }}
@@ -74,19 +75,23 @@
 
 
   <div class="col-xs-12 col-sm-6 col-sm-offset-3">
-      <form class="form-signin" method="POST" action="/login">
-          {{ q.hidden_tag() }}
-          {{ wtf.form_field(q.email, horizontal_columns=('sm', 1, 5)) }}
-          {{ wtf.form_field(q.password, horizontal_columns=('sm', 2, 10)) }}
-          {{ wtf.form_field(q.remember) }}
+      <form class="form-signin" method="POST" action="/addfunds">
+          {{ form.hidden_tag() }}
+          {{ wtf.form_field(form.amount) }}
           <div class="form-group">
-             <button type="submit" class="btn btn-primary">Login</button>
+                        <script
+                        src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                        data-key="pk_test_rW2nCw0ukmmWD7KWQwIzWOlW"
+                        data-amount="{{ form.amount.data }}"
+                        data-name="Demo Site"
+                        data-description="Example charge"
+                        data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+                        data-locale="auto">
+                </script>
           </div>
-          <div>
-              Forgot your password? <a href="#">Reset Password</a><br>
-              Don't have an account? <a href="/signup">Sign Up</a>
-      </div>
       </form>
+
   </div>
+
 </div>
 {% endblock %}

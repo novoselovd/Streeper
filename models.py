@@ -11,6 +11,7 @@ def time_now():
 from app import db
 
 
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
@@ -49,7 +50,11 @@ class Post(db.Model):
     content = db.Column(db.String(1000))
     link = db.Column(db.String(50))
     comment = db.Column(db.String(1000))
+    # if confirmed -> accepted; if !confirmed & !declined -> under consideration; if declined -> declined
     confirmed = db.Column(db.Boolean(), default=0)
+    declined = db.Column(db.Boolean(), default=0)
+    posted = db.Column(db.Boolean, default=0)
+    SHARELINK = db.Column(db.String(50))
     # post's target channel
     channel_id = db.Column(db.Integer, db.ForeignKey(Channel.id))
     # post's creator
