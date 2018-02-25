@@ -1,6 +1,4 @@
 import os
-import models
-import requests
 from flask import Flask, render_template, url_for, redirect, flash, request, abort
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -8,19 +6,28 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
-from forms import LoginForm, RegisterForm, CreateChannelForm, ChangePasswordForm, ResetForm
+
+from forms import LoginForm, RegisterForm, CreateChannelForm, ChangePasswordForm, ResetForm, CreatePostForm, \
+    TopUpBalanceForm, WithdrawalForm
 from generator import getrandompassword
 from channel_info import ChannelInfo
-
+import models
+import stripe
+import requests
 
 app = Flask(__name__)
 Bootstrap(app)
 
 db_path = os.path.join(os.path.dirname(__file__), 'users.db')
 channels_path = os.path.join(os.path.dirname(__file__), 'channels.db')
+posts_path = os.path.join(os.path.dirname(__file__), 'posts.db')
+withdrawals_path = os.path.join(os.path.dirname(__file__), 'withdrawals.db')
+
 db_uri = 'sqlite:///{}'.format(db_path)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
-app.config['SQLALCHEMY_BINDS'] = {'channels': 'sqlite:///{}'.format(channels_path)}
+app.config['SQLALCHEMY_BINDS'] = {'channels': 'sqlite:///{}'.format(channels_path),
+                                  'posts': 'sqlite:///{}'.format(posts_path),
+                                  'withdrawals': 'sqlite:///{}'.format(withdrawals_path)}
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SECRET_KEY'] = '2fHGGFdePK'
 app.config.from_pyfile('config.cfg')
@@ -30,13 +37,14 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-
-import models
-
-
-#Mail_settings
+# Mail_settings
 mail = Mail(app)
 s = URLSafeTimedSerializer('giax5RHYLB')
+
+# stripe keys
+pub_key = 'pk_test_rW2nCw0ukmmWD7KWQwIzWOlW'
+secret_key = 'sk_test_mqlBWdwuEV2Dm69ymxOIDwtg'
+stripe.api_key = secret_key
 
 
 @login_manager.user_loader
@@ -80,11 +88,11 @@ def signup():
             return redirect(url_for('signup'))
         hashed_password = generate_password_hash(form.password.data, method='sha256')
         new_user = models.User(name=form.name.data, email=(form.email.data).lower(), password=hashed_password,
-                        type=form.type.data)
+                               type=form.type.data)
         db.session.add(new_user)
         db.session.commit()
 
-        #Отправка письма
+        # letter sending
         token = s.dumps(form.email.data, salt='email-confirm')
         msg = Message('Confirm Email', sender='ouramazingapp@gmail.com', recipients=[form.email.data])
 
@@ -99,38 +107,37 @@ def signup():
     return render_template('signup.html', form=form)
 
 
-@app.route('/add_marketplace', methods=['GET', 'Post'])
+@app.route('/add_channel', methods=['GET', 'Post'])
 @login_required
-def add_marketplace():
+def add_channel():
     if current_user.type != 'Brand/Agency':
-        flash('You cannot add a channel because of your account type!')
+        flash('You cannot add a channel if don\'t have one!')
         return redirect(url_for('marketplace'))
     form = CreateChannelForm()
     if form.validate_on_submit():
-        if models.Channel.query.filter_by(link=(form.link.data).lower()).first():
-            flash('Such marketplace already exists')
-            return redirect(url_for('add_marketplace'))
         try:
             # some magic with api inside ChannelInfo object
             ci = ChannelInfo(form.link.data)
+            if models.Channel.query.filter_by(link=form.link.data.lower()).first():
+                flash('Such marketplace already exists')
+                return redirect(url_for('add_channel'))
             form.name.data = ci.name
             new_channel = models.Channel(name=ci.name,
-                                  link=ci.chat_id, description=form.description.data,
-                                  subscribers=ci.subscribers,
-                                  price=form.price.data, secret=getrandompassword(), category=form.category.data,
-                                  image=ci.photo, admin_id=current_user.id)
+                                         link=ci.chat_id, description=form.description.data,
+                                         subscribers=ci.subscribers,
+                                         price=form.price.data, secret=getrandompassword(),
+                                         category=form.category.data,
+                                         image=ci.photo, admin_id=current_user.id)
+            flash('Great! Now you can confirm ownership in account settings section.')
 
             db.session.add(new_channel)
             db.session.commit()
-
-            flash('Great! Now you can confirm ownership in account settings section')
-
             return redirect(url_for('marketplace'))
         except NameError:
             flash('No such channel found or incorrect link given')
-            return redirect(url_for('add_marketplace'))
+            return redirect(url_for('add_channel'))
 
-    return render_template('add_marketplace.html', form=form)
+    return render_template('add_channel.html', form=form)
 
 
 @app.route('/marketplace', methods=['GET', 'POST'])
@@ -142,14 +149,14 @@ def marketplace():
         price = request.form['pf'].split(',')
         subscribers = request.form['sf'].split(',')
         if category.lower() == 'all':
-            channels = models.Channel.query.filter(models.Channel.price >= price[0]).\
-                filter(models.Channel.price <= price[1]).\
-                filter(models.Channel.subscribers >= subscribers[0]).\
-                filter(models.Channel.subscribers <= subscribers[1]).\
+            channels = models.Channel.query.filter(models.Channel.price >= price[0]). \
+                filter(models.Channel.price <= price[1]). \
+                filter(models.Channel.subscribers >= subscribers[0]). \
+                filter(models.Channel.subscribers <= subscribers[1]). \
                 filter(models.Channel.confirmed == 1)
 
             return render_template('marketplace.html', channels=channels, curr_cat=category, curr_price=price,
-                           curr_subs=subscribers)
+                                   curr_subs=subscribers)
         else:
             channels = models.Channel.query.filter(models.Channel.price >= price[0]). \
                 filter(models.Channel.price <= price[1]). \
@@ -159,7 +166,7 @@ def marketplace():
                 filter(models.Channel.confirmed == 1)
 
             return render_template('marketplace.html', channels=channels, curr_cat=category, curr_price=price,
-                           curr_subs=subscribers)
+                                   curr_subs=subscribers)
 
     return render_template('marketplace.html', channels=channels, curr_cat='All', curr_price=[10, 10000],
                            curr_subs=[0, 300000])
@@ -182,23 +189,28 @@ def privacy():
     return render_template('privacy.html')
 
 
-@app.route('/contact')
-def contact():
-    ab = LoginForm()
-    return render_template('contact.html', q=ab)
+# @app.route('/contact')
+# def contact():
+#     return render_template('contact.html')
 
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
     channels = models.Channel.query.filter(models.Channel.admin_id == current_user.id)
-    form = ChangePasswordForm()
 
+    req = 0
+
+    for i in current_user.channels.all():
+        for j in i.requests.all():
+            req += 1
+
+    form = ChangePasswordForm()
     if form.validate_on_submit():
         if check_password_hash(current_user.password, form.current_password.data):
             new_hashed_password = generate_password_hash(form.new_password.data, method='sha256')
 
-            curr = models.User.query.filter_by(email=current_user.email).first()
+            curr = db.session.query(models.User).filter_by(email=current_user.email).first()
             curr.password = new_hashed_password
 
             db.session.commit()
@@ -207,11 +219,58 @@ def settings():
         else:
             flash('Current password is wrong')
             return redirect(url_for('settings'))
-    # elif request.method == 'POST':
-    #     print('gay')
-    #     return redirect('/')
+    return render_template('settings.html', form=form, channels=channels, user=current_user, req=req)
 
-    return render_template('settings.html', form=form, channels=channels)
+
+@app.route('/user/<uniqid>', methods=['GET', 'POST'])
+@login_required
+def user(uniqid):
+    if str(current_user.id) != uniqid:
+        abort(404)
+    else:
+        curr = db.session.query(models.User).filter_by(email=current_user.email).first()
+        if curr is None:
+            flash('User\'s id ' + uniqid + ' not found.')
+            return redirect(url_for('index'))
+
+        form = TopUpBalanceForm()
+
+        if form.validate_on_submit() and request.method == 'POST':
+            customer = stripe.Customer.create(email=request.form['stripeEmail'],
+                                              source=request.form['stripeToken'])
+            charge = stripe.Charge.create(
+                customer=customer,
+                amount=form.amount.data,
+                currency='usd',
+                description='Posting'
+            )
+            curr.current_balance = curr.current_balance + form.amount.data
+            db.session.commit()
+            flash('Successfully replenished your balance!')
+            return redirect('/user/' + uniqid)
+
+    return render_template('user.html',
+                           form=form,
+                           user=curr,
+                           )
+
+
+@app.route('/accept_request', methods=['POST', 'GET'])
+@login_required
+def accept_request():
+    request_post = request.args.get('request')
+    request_post.confirmed = True
+    db.session.commit()
+    flash('Great! You now have 48 hours to post the ad!')
+    return redirect('/user/%s' % current_user.id)
+
+
+@app.route('/decline_request', methods=['POST', 'GET'])
+@login_required
+def decline_request():
+    request_post = request.args.get('request')
+    flash('Got rid of that one!')
+    return redirect('/user/%s' % current_user.id)
 
 
 @app.route('/confirm_channel', methods=['POST', 'GET'])
@@ -229,9 +288,8 @@ def confirm_channel():
         else:
             response = r.json()['result']['description']
             if secret in response:
-                ch = models.Channel.query.filter_by(secret=secret).first()
-                test = db.session.query(models.Channel).filter_by(secret=secret).first()
-                test.confirmed = 1
+                ch = db.session.query(models.Channel).filter_by(secret=secret).first()
+                ch.confirmed = 1
                 db.session.commit()
                 flash('Successfully added your channel into our base!')
                 return redirect('/marketplace')
@@ -242,12 +300,11 @@ def confirm_channel():
         abort(404)
 
 
-
 @app.route('/confirm_email/<token>')
 def confirm_email(token):
     try:
         email = s.loads(token, salt='email-confirm', max_age=3600)
-        curr = models.User.query.filter_by(email=email).first()
+        curr = db.session.query(models.User).filter_by(email=email).first()
         curr.email_confirmed = 1
         db.session.commit()
     except SignatureExpired:
@@ -255,20 +312,40 @@ def confirm_email(token):
     return render_template('confirm_email.html')
 
 
-@app.route('/channel/<r>')
+@app.route('/delete_channel', methods=['POST', 'GET'])
+@login_required
+def delete_channel():
+    secret = request.args.get('secret')
+    ch = db.session.query(models.Channel).filter_by(secret=secret).first()
+    if current_user.id == ch.admin_id:
+        db.session.delete(ch)
+        db.session.commit()
+
+        flash('Successfully deleted channel from database!')
+        return redirect('/settings')
+    else:
+        flash('Ooops, something went wrong!')
+        return redirect('/settings')
+
+
+@app.route('/channel/<r>', methods=['GET', 'POST'])
 @login_required
 def channel(r):
-    chan = models.Channel.query.filter_by(link='@'+r).first()
+    chan = models.Channel.query.filter_by(link='@' + r).first()
     if not chan:
         abort(404)
-    return render_template('channel.html', chan=chan)
-
-
-# def confirm_ownership():
-#     if request.method == 'POST':
-#         category = request.form['test']
-#         print(category)
-#     return redirect('/settings')
+    form = CreatePostForm()
+    if form.validate_on_submit():
+        post = models.Post(content=form.content.data,
+                           link=form.link.data,
+                           comment=form.comment.data,
+                           channel_id=chan.id,
+                           user_id=current_user.id)
+        db.session.add(post)
+        db.session.commit()
+        flash('Great! Your request successfully sent to "%s"\'s administrator!' % chan.name)
+        return redirect(url_for('marketplace'))
+    return render_template('channel.html', chan=chan, form=form)
 
 
 @app.route('/reset', methods=['GET', 'POST'])
@@ -282,7 +359,7 @@ def reset():
             return redirect(url_for('reset'))
         else:
             new_password = getrandompassword()
-            curr = models.User.query.filter_by(email=form.email.data.lower()).first()
+            curr = db.session.query(models.User).filter_by(email=form.email.data.lower()).first()
             curr.password = generate_password_hash(new_password, method='sha256')
             db.session.commit()
 
@@ -296,6 +373,35 @@ def reset():
     return render_template('reset.html', form=form)
 
 
+@app.route('/withdrawal', methods=['GET','POST'])
+@login_required
+def withdrawal():
+    form = WithdrawalForm()
+
+    w = models.Withdrawal.query.filter_by(user_id=current_user.id)
+
+    if form.validate_on_submit():
+        if current_user.current_balance < form.amount.data:
+            flash('You do not have enough funds')
+            return redirect('/withdrawal')
+        else:
+            user = db.session.query(models.User).filter_by(email=current_user.email).first()
+            user.current_balance -= form.amount.data
+            db.session.commit()
+
+            new_withdrawal = models.Withdrawal(status="Request sent", amount=form.amount.data, card=form.card.data, user_id=current_user.id)
+            db.session.add(new_withdrawal)
+            db.session.commit()
+
+            msg = Message('Withdrawal request', sender='ouramazingapp@gmail.com', recipients=["tbago@yandex.ru"])
+            msg.body = 'User ' + current_user.email + ' wants ' + str(form.amount.data) + ' dollars on ' + str(form.card.data)
+            mail.send(msg)
+
+            flash('Your request was successfully sent')
+            return redirect('/withdrawal')
+    return render_template('withdrawal.html', form=form, w=w)
+
+
 if __name__ == '__main__':
-    # update.run()
+
     app.run(debug=True)

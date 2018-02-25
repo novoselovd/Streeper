@@ -47,9 +47,27 @@ class CreateChannelForm(FlaskForm):
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField('Current password', validators=[InputRequired()])
     new_password = PasswordField('New password', validators=[InputRequired(),
-                                                             validators.EqualTo('new_password_confirm', message='Passwords do not match.')])
+                                                             validators.EqualTo('new_password_confirm',
+                                                                                message='Passwords do not match.')])
     new_password_confirm = PasswordField('Confirm new password', validators=[InputRequired()])
 
 
 class ResetForm(FlaskForm):
     email = StringField('Email', validators=[InputRequired(), Email(message='Incorrect email.'), Length(max=50)])
+
+
+class CreatePostForm(FlaskForm):
+    link = StringField('Your project\'s link', [Length(min=1, max=50)])
+    content = StringField('Advertisement content', [InputRequired()])
+    comment = StringField('Leave some comments', [InputRequired()])
+
+
+class TopUpBalanceForm(FlaskForm):
+    amount = IntegerField('Amount', validators=[InputRequired()])
+
+
+class WithdrawalForm(FlaskForm):
+    amount = IntegerField('Amount', validators=[InputRequired()])
+    card = IntegerField('Card', validators=[InputRequired()])
+
+

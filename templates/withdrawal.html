@@ -1,27 +1,8 @@
 {% extends "base.html" %}
 {% import "wtf.html" as wtf %}
 
-{% block head %}
-    <style>
-        .starter-template {
-            padding: 40px 15px;
-            text-align: center;
-        }
-    </style>
-{% endblock %}
-
 {% block content %}
 <!-- Navigation -->
-
-<script type="text/javascript">
-function fill_in(name, subscribers)
-{
-    form = document.forms['add_marketplace'];
-    form.elements['name'].value = name;
-    form.elements['subscribers'].value = subscribers;
-}
-</script>
-
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -45,9 +26,11 @@ function fill_in(name, subscribers)
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
+                      <li><a href="/user/{{ current_user.id }}">Profile</a></li>
                       <li><a href="/settings">Account settings</a></li>
-                                                {% if current_user.type == 'Brand/Agency' %}
-                            <li><a href="/add_marketplace">Add marketplace</a></li>
+                                          <li><a href="/withdrawal">Withdrawal</a></li>
+                         {% if current_user.type == 'Brand/Agency' %}
+                            <li><a href="/add_channel">Add channel</a></li>
                             {% endif %}
                       <li role="separator" class="divider"></li>
                       <li><a href="/logout">Log out</a></li>
@@ -62,18 +45,15 @@ function fill_in(name, subscribers)
 </nav>
 
 
-<!-- Page Content -->
 <div class="container">
   <div class="panel-header">
-      <h2 class="text-center">
-          Add your channel
-      </h2>
+      <h2 class="text-center">Withdrawal</h2>
   </div>
 
-        {% with alerts = get_flashed_messages() %}
+    {% with alerts = get_flashed_messages() %}
         {% if alerts %}
             {% for alert in alerts %}
-                {% if "Great" in alert %}
+                {% if "success" in alert %}
                     <div class="col-xs-12 col-sm-6 col-sm-offset-3">
                         <div class="alert alert-success">
                           {{ alert }}
@@ -90,20 +70,48 @@ function fill_in(name, subscribers)
         {% endif %}
     {% endwith %}
 
+
   <div class="col-xs-12 col-sm-6 col-sm-offset-3">
-      <form class="form-add_marketplace" method="POST" action="/add_marketplace">
+      <form class="form-signin" method="POST" action="/withdrawal">
           {{ form.hidden_tag() }}
-          {{ wtf.form_field(form.link) }}
-          {{ wtf.form_field(form.category) }}
-          {{ wtf.form_field(form.description) }}
-          {{ wtf.form_field(form.price) }}
-          <div class="form-group" style="margin-top: 20px;">
-             <button type="submit" class="btn btn-primary">Add Channel</button>
+          {{ wtf.form_field(form.card) }}
+          {{ wtf.form_field(form.amount) }}
+          <div class="form-group">
+             <button type="submit" class="btn btn-primary">Request funds</button>
           </div>
       </form>
+      <div class="text-center"><h3 >My withdrawals:</h3><br></div>
+
   </div>
+
+
+    <table class="table table-sm table-dark">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Card</th>
+      <th scope="col">Date</th>
+      <th scope="col">Amount</th>
+      <th scope="col">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+
+  {% for row in w %}
+          <tr>
+{#              <form method="POST" action="/settings">#}
+                <td scope="row">{{ loop.index }}</td>
+                <td id="test">{{ row.card }}</td>
+              <td>{{ row.date }}</td>
+              <td>{{ row.amount }}</td>
+              <td>{{ row.status }}</td>
+          </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+
+
+
 </div>
-
-
-
 {% endblock %}

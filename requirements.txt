@@ -1,3 +1,11 @@
 wtforms
 werkzeug
 flask
+flask_bootstrap
+flask_login
+flask_sqlalchemy
+flask_mail
+itsdangerous
+requests
+urllib3
+flask_wtf

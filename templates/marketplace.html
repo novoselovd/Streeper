@@ -12,7 +12,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Navigation -->
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -21,13 +20,13 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
-                z
             </button>
             <a class="navbar-brand" href="/">app</a>
         </div>
         <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="/marketplace">Marketplace</a></li>
+
                 {% if not current_user.is_authenticated %}
                 <li><p style="padding:8px 0 0 10px;"><a href="/signup"
                                                             class="btn btn-primary" style="color:#fff;">Sign Up For
@@ -37,9 +36,11 @@
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
+                      <li><a href="/user/{{ current_user.id }}">Profile</a></li>
                       <li><a href="/settings">Account settings</a></li>
-                                                                        {% if current_user.type == 'Brand/Agency' %}
-                            <li><a href="/add_marketplace">Add marketplace</a></li>
+                                          <li><a href="/withdrawal">Withdrawal</a></li>
+                         {% if current_user.type == 'Brand/Agency' %}
+                            <li><a href="/add_channel">Add channel</a></li>
                             {% endif %}
                       <li role="separator" class="divider"></li>
                       <li><a href="/logout">Log out</a></li>
@@ -52,6 +53,9 @@
     </div>
     <!-- /.container -->
 </nav>
+
+
+<div class="container">
 
              {% with alerts = get_flashed_messages() %}
         {% if alerts %}
@@ -73,8 +77,6 @@
         {% endif %}
     {% endwith %}
 
-
-<div class="container">
   <h2>Marketplace</h2>
   <p>Here you can find a database of channels</p>
 

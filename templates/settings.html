@@ -35,9 +35,11 @@
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
+                      <li><a href="/user/{{ current_user.id }}">Profile</a></li>
                       <li><a href="/settings">Account settings</a></li>
-                                                                        {% if current_user.type == 'Brand/Agency' %}
-                            <li><a href="/add_marketplace">Add marketplace</a></li>
+                                          <li><a href="/withdrawal">Withdrawal</a></li>
+                         {% if current_user.type == 'Brand/Agency' %}
+                            <li><a href="/add_channel">Add channel</a></li>
                             {% endif %}
                       <li role="separator" class="divider"></li>
                       <li><a href="/logout">Log out</a></li>
@@ -85,7 +87,8 @@
             <p>Account type: {{ current_user.type }}</p>
             <p>Current balance: {{ current_user.current_balance }}$</p>
             {% if current_user.type == "Brand/Agency" %}
-                <p>My channels: </p><br>
+                <p><b>My requests:</b> <a data-target="#qqq" data-toggle="modal" href="#qqq">{{ req }}</a></p>
+                <p>My channels:</p>
 <table class="table table-sm table-dark">
   <thead>
     <tr>
@@ -93,6 +96,7 @@
       <th scope="col">Channel </th>
       <th scope="col">Confirmed</th>
       <th scope="col">Secret key</th>
+      <th scope="col"></th>
       <th scope="col"></th>
     </tr>
   </thead>
@@ -107,18 +111,33 @@
                       <td>No</td>
                       <td><b>{{ row.secret }}</b></td>
                       <td><a href="/confirm_channel?secret={{ row.secret }}"><button class="btn btn-warning">Confirm</button></a></td>
+                      <td><button class="btn btn-danger" data-book-id={{ row.secret }} data-toggle="modal" data-target="#exampleModal">Delete</button></td>
                   {% else %}
                       <td>Yes</td>
                       <td></td>
                       <td></td>
+                      <td><button class="btn btn-danger" data-toggle="modal" data-target="#exampleModal">Delete</button></td>
                   {% endif %}
 {#              </form>#}
           </tr>
   {% endfor %}
   </tbody>
 </table>
+
+
+
+
+
+
+
+
             {% endif %}
+        <div class="row">
             <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">Change password</button>
+            {% if current_user.type!="Brand/Agency" %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#ttt">Add funds</button>
+            {% endif %}
+        </div>
         </div>
     </div>
 </div>
@@ -154,27 +173,74 @@
 </div>
 
 
-        <!-- Modal1 -->
-<div id="myModal1" class="modal fade" role="dialog">
-  <div class="modal-dialog">
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Deleting channel from database</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="https://google.com" id="link"><button type="button" class="btn btn-primary">Yes, delete it</button></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+    <div id="qqq" class="modal fade" role="dialog">
+  <div class="modal-dialog" style="width:1250px;">
 
     <!-- Modal content-->
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Confirm your channel</h4>
+        <h4 class="modal-title">Requests</h4>
       </div>
       <div class="modal-body">
-          <form method="POST" action="/confirm_ownership">
-              {{ form.hidden_tag() }}
-              <p>To prove your ownership of the channel just add the code from 'Secret key' section into any place of
-                  description of your channel. Then click confirm button. If our bot successfully finds the key
-              your channel will be added to our database. After that you can change the description back to what it
-                  was or anything else.</p>
-              <div class="form-group">
-                <button type="submit" class="btn btn-success">Check</button>
-              </div>
-          </form>
+{#      <form method="POST" action="/user/{{ user.id }}">#}
+      <table class="table table-sm table-dark">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Channel </th>
+      <th scope="col">Project Link</th>
+      <th scope="col">Ad Content</th>
+      <th scope="col">Comment</th>
+      <th scope="col"></th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  <tbody>
+
+  {% for channel in user.channels.all() %}
+      {% for request in channel.requests.all() %}
+          <tr>
+{#              <form method="POST" action="/settings">#}
+                <td scope="row">{{ loop.index }}</td>
+                <td id="test">{{ channel.name }}</td>
+                  {% if request.confirmed == 0 %}
+                      <td><a href="{{ request.link }}">{{ request.link }}</a></td>
+                      <td><b>{{ request.content }}</b></td>
+                      <td><b>{{ request.comment }}</b></td>
+                      <td><a href="/accept_request?request={{ request }}"><button class="btn">Accept</button></a></td>
+                      <td><a href="/decline_request?requst={{ request }}"><button class="btn btn-warning">Decline</button></a></td>
+                  {% endif %}
+{#              </form>#}
+          </tr>
+      {% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+{#      </form>#}
       </div>
 {#      <div class="modal-footer">#}
 {#        <button type="submit" class="btn btn-success">Submit</button>#}
@@ -184,5 +250,45 @@
 
   </div>
 </div>
+
+
+
+    <!-- Modal -->
+<div class="modal fade" id="ttt" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Deleting channel from database</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="https://google.com" id="link"><button type="button" class="btn btn-primary">Yes, delete it</button></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<script>
+    $('#exampleModal').on('show.bs.modal', function(e) {
+
+    //get data-id attribute of the clicked element
+    var bookId = $(e.relatedTarget).data('book-id');
+    var b = "/delete_channel?secret=";
+    var res = b+bookId;
+
+    $('#link').attr('href', res);
+
+    });
+</script>
 
 {% endblock %}

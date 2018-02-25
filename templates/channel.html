@@ -11,7 +11,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Navigation -->
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -35,9 +34,11 @@
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
+                      <li><a href="/user/{{ current_user.id }}">Profile</a></li>
                       <li><a href="/settings">Account settings</a></li>
-                                                                        {% if current_user.type == 'Brand/Agency' %}
-                            <li><a href="/add_marketplace">Add marketplace</a></li>
+                                          <li><a href="/withdrawal">Withdrawal</a></li>
+                         {% if current_user.type == 'Brand/Agency' %}
+                            <li><a href="/add_channel">Add channel</a></li>
                             {% endif %}
                       <li role="separator" class="divider"></li>
                       <li><a href="/logout">Log out</a></li>
@@ -74,7 +75,7 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-            <img src="/Users/dmitry/Desktop/app/file_32.jpg">
+            <img src="/home/yana/PyCharmProjects/app-master/images/file_34.jpg">
             <p>Channel name: {{ chan.name }}</p>
             <p>Description : {{ chan.description }}</p>
             <p>Subscribers: {{ chan.subscribers }}</p>
@@ -103,7 +104,34 @@
   <strong>Please, </strong>confirm your email to continue
 </div>
 {% else %}
-<p>hello</p>
+              {% with alerts = get_flashed_messages() %}
+                  {% if alerts %}
+                      {% for alert in alerts %}
+                          {% if "Great" in alert %}
+                              <div class="col-xs-12 col-sm-6 col-sm-offset-3">
+                                  <div class="alert alert-success">
+                                      {{ alert }}
+                                  </div>
+                              </div>
+                          {% else %}
+                              <div class="col-xs-12 col-sm-6 col-sm-offset-3">
+                                  <div class="alert alert-danger">
+                                      {{ alert }}
+                                  </div>
+                              </div>
+                          {% endif %}
+                      {% endfor %}
+                  {% endif %}
+              {% endwith %}
+      <form class="form-add_post" method="POST" action="/channel/{{ chan.link[1:] }}">
+          {{ form.hidden_tag() }}
+          {{ wtf.form_field(form.link) }}
+          {{ wtf.form_field(form.content) }}
+          {{ wtf.form_field(form.comment) }}
+          <div class="form-group" style="margin-top: 20px;">
+             <button type="submit" class="btn btn-primary">Send request</button>
+          </div>
+      </form>
               {% endif %}
       </div>
 {#      <div class="modal-footer">#}

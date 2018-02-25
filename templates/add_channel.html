@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 {% import "wtf.html" as wtf %}
 
+{% block head %}
+    <style>
+        .starter-template {
+            padding: 40px 15px;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
+<!-- Navigation -->
+
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -27,7 +38,7 @@
                     <ul class="dropdown-menu">
                       <li><a href="/user/{{ current_user.id }}">Profile</a></li>
                       <li><a href="/settings">Account settings</a></li>
-                                          <li><a href="/withdrawal">Withdrawal</a></li>
+                      <li><a href="/withdrawal">Withdrawal</a></li>
                          {% if current_user.type == 'Brand/Agency' %}
                             <li><a href="/add_channel">Add channel</a></li>
                             {% endif %}
@@ -44,15 +55,18 @@
 </nav>
 
 
+<!-- Page Content -->
 <div class="container">
   <div class="panel-header">
-      <h2 class="text-center">Login</h2>
+      <h2 class="text-center">
+          Add your channel
+      </h2>
   </div>
 
-    {% with alerts = get_flashed_messages() %}
+        {% with alerts = get_flashed_messages() %}
         {% if alerts %}
             {% for alert in alerts %}
-                {% if "Success" in alert %}
+                {% if "Great" in alert %}
                     <div class="col-xs-12 col-sm-6 col-sm-offset-3">
                         <div class="alert alert-success">
                           {{ alert }}
@@ -69,21 +83,20 @@
         {% endif %}
     {% endwith %}
 
-
   <div class="col-xs-12 col-sm-6 col-sm-offset-3">
-      <form class="form-signin" method="POST" action="/login">
-          {{ q.hidden_tag() }}
-          {{ wtf.form_field(q.email, horizontal_columns=('sm', 1, 5)) }}
-          {{ wtf.form_field(q.password, horizontal_columns=('sm', 2, 10)) }}
-          {{ wtf.form_field(q.remember) }}
-          <div class="form-group">
-             <button type="submit" class="btn btn-primary">Login</button>
+      <form class="form-add_channel" method="POST" action="/add_channel">
+          {{ form.hidden_tag() }}
+          {{ wtf.form_field(form.link) }}
+          {{ wtf.form_field(form.category) }}
+          {{ wtf.form_field(form.description) }}
+          {{ wtf.form_field(form.price) }}
+          <div class="form-group" style="margin-top: 20px;">
+             <button type="submit" class="btn btn-primary">Add Channel</button>
           </div>
-          <div>
-              Forgot your password? <a href="#">Reset Password</a><br>
-              Don't have an account? <a href="/signup">Sign Up</a>
-      </div>
       </form>
   </div>
 </div>
+
+
+
 {% endblock %}

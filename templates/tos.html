@@ -11,7 +11,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Navigation -->
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -35,9 +34,11 @@
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }} <span class="caret"></span></a>
                     <ul class="dropdown-menu">
+                      <li><a href="/user/{{ current_user.id }}">Profile</a></li>
                       <li><a href="/settings">Account settings</a></li>
-                                                                        {% if current_user.type == 'Brand/Agency' %}
-                            <li><a href="/add_marketplace">Add marketplace</a></li>
+                                          <li><a href="/withdrawal">Withdrawal</a></li>
+                         {% if current_user.type == 'Brand/Agency' %}
+                            <li><a href="/add_channel">Add channel</a></li>
                             {% endif %}
                       <li role="separator" class="divider"></li>
                       <li><a href="/logout">Log out</a></li>
