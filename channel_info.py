@@ -1,4 +1,6 @@
 import requests
+import wget
+import os
 import urllib.request
 
 
@@ -36,10 +38,8 @@ class ChannelInfo:
         file_path = requests.get(
             'https://api.telegram.org/bot435931033:AAHtZUDlQ0DeQVUGNIGpTFhcV1u3wXDjKJY/getFile?file_id=%s' % file_id
         ).json()['result']['file_path']
-        urllib.request.urlretrieve(
-            'https://api.telegram.org/file/bot435931033:AAHtZUDlQ0DeQVUGNIGpTFhcV1u3wXDjKJY/%s' % file_path,
-            'images/' + file_path.split('/')[1]
-        )
+        url = 'https://api.telegram.org/file/bot435931033:AAHtZUDlQ0DeQVUGNIGpTFhcV1u3wXDjKJY/%s' % file_path
+        wget.download(url, os.path.dirname(__file__) + '/images/' + file_path.split('/')[1])
         return file_path.split('/')[1]
 
 # s = 'https://t.me/MachineLearning'

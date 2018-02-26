@@ -12,6 +12,7 @@ from forms import LoginForm, RegisterForm, CreateChannelForm, ChangePasswordForm
     TopUpBalanceForm, WithdrawalForm
 from generator import getrandompassword
 from channel_info import ChannelInfo
+import update
 import models
 import stripe
 import requests
@@ -192,9 +193,20 @@ def privacy():
     return render_template('privacy.html')
 
 
-# @app.route('/contact')
-# def contact():
-#     return render_template('contact.html')
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        subject = request.form['subject']
+        email = request.form['email']
+        message = request.form['message']
+
+        msg = Message(subject, sender='ouramazingapp@gmail.com', recipients=["tbago@yandex.ru"])
+        msg.body = message + " {}".format(email)
+        mail.send(msg)
+
+        flash("Thank you :) We will respond to your question as soon as we can")
+        return redirect('/contact')
+    return render_template('contact.html')
 
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -261,7 +273,6 @@ def user(uniqid):
     return render_template('user.html',
                            user=curr,
                            )
-
 
 
 @app.route('/confirm_channel', methods=['POST', 'GET'])
@@ -463,6 +474,8 @@ def remove_row():
 @app.route('/addfunds', methods=['GET', 'POST'])
 @login_required
 def addfunds():
+    if current_user.type == "Brand/Agency":
+        abort(404)
     form = TopUpBalanceForm()
     curr = db.session.query(models.User).filter_by(email=current_user.email).first()
 
@@ -519,5 +532,5 @@ def confirmSHARELINK():
 
 
 if __name__ == '__main__':
-
+    # update.run()
     app.run(debug=True)
