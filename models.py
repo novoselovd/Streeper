@@ -55,6 +55,8 @@ class Post(db.Model):
     declined = db.Column(db.Boolean(), default=0)
     posted = db.Column(db.Boolean, default=0)
     SHARELINK = db.Column(db.String(50))
+    # need to be on channel till that moment
+    post_time = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     # post's target channel
     channel_id = db.Column(db.Integer, db.ForeignKey(Channel.id))
     # post's creator
